@@ -9,14 +9,11 @@ RUN apk add --update --no-cache \
     musl-dev \
     python3-dev \
     g++
-ENV GRPC_PYTHON_VERSION 1.54.2
-ENV PIP_TARGET=/install
+COPY requirements.txt requirements.txt
 RUN python -m pip install --upgrade pip
-RUN pip install grpcio==${GRPC_PYTHON_VERSION} grpcio-tools==${GRPC_PYTHON_VERSION}
+RUN pip install -t /install -r requirements.txt
 
 FROM base
-ENV GRPC_PYTHON_VERSION 1.54.2
 COPY --from=builder /install /usr/local
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN python -c 'import site; print(site.getsitepackages())'
 
