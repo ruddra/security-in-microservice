@@ -1,0 +1,25 @@
+# konga
+
+curl --location --request POST 'http://localhost:8001/services/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "admin-api",
+    "host": "localhost",
+    "port": 8001
+}'
+
+curl --location --request POST 'http://localhost:8001/services/admin-api/routes' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "paths": ["/admin-api"]
+}'
+
+curl -X POST http://localhost:8001/services/admin-api/plugins \
+    --data "name=key-auth" 
+
+
+curl --location --request POST 'http://localhost:8001/consumers/' \
+--form 'username=konga' \
+--form 'custom_id=09e53cb7-f45d-4e21-96a3-dc81e756a049'
+
+curl --location --request POST 'http://localhost:8001/consumers/f4e2a5ae-1e44-4feb-b580-78718a8195d1/key-auth'

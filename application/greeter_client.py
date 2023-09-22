@@ -14,7 +14,7 @@
 """The Python implementation of the GRPC helloworld.Greeter client."""
 
 from __future__ import print_function
-
+import sys
 import logging
 import time
 import consul
@@ -24,16 +24,16 @@ from grpc_generated import helloworld_pb2_grpc
 
 CONSUL_HOST = "consul"
 CONSUL_PORT = 8500
-GRPC_HOST = "grpc-server"
+GRPC_HOST = "localhost"
 GRPC_PORT = 50051
 
 
 def resolve_service():
     c = consul.Consul(host=CONSUL_HOST, port=CONSUL_PORT)
     service = c.agent.services().get(f'{GRPC_HOST}-{GRPC_PORT}')
-    if service:
+    if service and not (sys.argv and sys.argv[0] == "external"):
         return service["Address"], service["Port"]
-    print("Consul failed")
+    print("Consul failed or calling external")
     return GRPC_HOST, GRPC_PORT
     # index = None
     # while True:

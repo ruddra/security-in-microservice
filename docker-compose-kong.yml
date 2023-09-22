@@ -38,14 +38,13 @@ services:
     image: kong:latest
     command: "kong migrations bootstrap"
     networks:
-      kong-net:
-        ipv4_address: 192.168.18.6
+      - kong-net
     restart: on-failure
     environment:
       KONG_PG_HOST: 192.168.18.5
       KONG_DATABASE: postgres
       KONG_PG_PASSWORD: kong
-      KONG_DNS_RESOLVER: 192.168.18.4:8500
+      KONG_DNS_RESOLVER: 192.168.18.4:8600,192.168.18.4:8500,192.168.18.4:8700
     links:
       - kong-database
     depends_on:
@@ -57,10 +56,10 @@ services:
   #######################################
   kong:
     image: kong:latest
+    container_name: kong_01
     restart: always
     networks:
-      kong-net:
-        ipv4_address: 192.168.18.7
+      - kong-net
     environment:
       KONG_DATABASE: postgres
       KONG_PG_HOST: 192.168.18.5
@@ -69,7 +68,8 @@ services:
       KONG_PROXY_LISTEN: 0.0.0.0:8000
       KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
-      KONG_DNS_RESOLVER: 192.168.18.4:8500
+      KONG_DNS_RESOLVER: 192.168.18.4:8600,192.168.18.4:8500,192.168.18.4:8700
+      KONG_DECLARATIVE_CONFIG: "/opt/kong/kong.yaml"
     depends_on:
       - kong-migration
       - kong-database
@@ -83,7 +83,7 @@ services:
       - "8001:8001"
       - "8000:8000"
     volumes: 
-      - ./config/kong.yml:/usr/local/kong/declarative/kong.yml
+      - ./config:/opt/kong
 
   #######################################
   # Konga database prepare
@@ -155,10 +155,6 @@ services:
         - consul
     volumes:
         - ./application:/application
-    expose:
-        - "50051"
-    ports:
-      - "50051:50051"
     command: sh -c "python -u /application/greeter_server.py"
     networks:
       kong-net:
@@ -178,5 +174,20 @@ services:
         ipv4_address: 192.168.18.10
  
     command: sh -c "python -u /application/greeter_client.py"
+
+  grpc-client-ext:
+    build:
+        context: .
+        dockerfile: ./Dockerfile
+    container_name: grpc_client_02
+    depends_on:
+        - grpc-server
+    volumes:
+        - ./application:/application
+    networks:
+      kong-net:
+        ipv4_address: 192.168.18.12
+ 
+    command: sh -c "python -u /application/greeter_client.py external"
 
  

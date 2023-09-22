@@ -1,0 +1,41 @@
+curl -X POST localhost:8001/services \
+ --data name=grpc_server \
+ --data protocol=grpc \
+ --data host=grpc-server \
+ --data port=50051
+
+
+  curl -X POST localhost:8001/services/grpc_server/routes \
+ --data protocols=http \
+ --data name=web-service \
+ --data paths[]=/
+
+ curl -X POST localhost:8001/routes/web-service/plugins \
+  --data name=grpc-web \
+  --data config.proto=/usr/local/kong/helloworld.proto
+
+docker cp helloworld.proto kong_01:/usr/local/kong 
+
+
+  curl -X POST localhost:8000/helloworld.Greeter/SayHello \
+--header 'x-grpc: true' \
+--header 'Content-Type: application/json' \
+--data '{"name":"kong2.1"}'
+
+// attempt 2
+
+curl -XPOST localhost:8001/services \
+   --data name=grpc \
+   --data protocol=grpc \
+   --data host=grpc-server \
+   --data port=50051
+
+
+curl -XPOST localhost:8001/services/grpc/routes \
+   --data protocols=grpc \
+   --data name=catch-all \
+   --data paths=/
+
+
+grpcurl -v -d '{"name": "Kong!"}' \
+   -plaintext localhost:8000 helloworld.Greeter.SayHello

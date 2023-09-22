@@ -1,6 +1,6 @@
 # a very minimal declarative config file
 _format_version: "2.1"
-_transform: true
+_transform: false
 services:
   - name: grpc-service
     url: http://grpc-service.service.dc1.consul
