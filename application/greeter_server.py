@@ -10,7 +10,7 @@ from grpc_generated import helloworld_pb2_grpc
 CONSUL_HOST = "consul"
 CONSUL_PORT = 8500
 GRPC_HOST = "grpc-server"
-GRPC_PORT = "50051"
+GRPC_PORT = 50051
 
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
@@ -25,8 +25,8 @@ def register():
     check = consul.Check.tcp(CONSUL_HOST, CONSUL_PORT, "30s")
 
     c.agent.service.register(
-        "grpc_server",
-        f"grpc_server-{GRPC_PORT}",
+        GRPC_HOST,
+        f"{GRPC_HOST}-{GRPC_PORT}",
         address=GRPC_HOST,
         port=GRPC_PORT,
         check=check
@@ -44,9 +44,9 @@ def serve():
         reflection.SERVICE_NAME,
     )
     reflection.enable_server_reflection(SERVICE_NAMES, server)
-    server.add_insecure_port('[::]:' + port)
+    server.add_insecure_port(f'[::]:{port}')
     server.start()
-    print("Server started, listening on " + port)
+    print(f"Server started, listening on {port}")
     try:
         register()
         print("Registered on consul")

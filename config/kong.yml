@@ -3,7 +3,7 @@ _format_version: "2.1"
 _transform: true
 services:
   - name: grpc-service
-    url: http://grpc_service.service.dc1.consul
+    url: http://grpc-service.service.dc1.consul
     routes:
       - name: grpc_route
         paths:

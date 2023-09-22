@@ -17,18 +17,34 @@ from __future__ import print_function
 
 import logging
 import time
-
+import consul
 import grpc
 from grpc_generated import helloworld_pb2
 from grpc_generated import helloworld_pb2_grpc
 
+CONSUL_HOST = "consul"
+CONSUL_PORT = 8500
+GRPC_HOST = "grpc-server"
+GRPC_PORT = 50051
+
+
+def resolve_service():
+    c = consul.Consul(host=CONSUL_HOST, port=CONSUL_PORT)
+    service = c.agent.services().get(f'{GRPC_HOST}-{GRPC_PORT}')
+    if service:
+        return service["Address"], service["Port"]
+    print("Consul failed")
+    return GRPC_HOST, GRPC_PORT
+    # index = None
+    # while True:
+    #     data = c.kv.get(, index=index)
+    #     print(data)
+
 
 def run():
-    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
-    # used in circumstances in which the with statement does not fit the needs
-    # of the code.
-    print("Will try to greet world ... ")
-    with grpc.insecure_channel("localhost:8000/grpc_server") as channel:
+    print("Will try to call internal service")
+    server, port = resolve_service()
+    with grpc.insecure_channel(f"{server}:{port}/grpc_server") as channel:
         stub = helloworld_pb2_grpc.GreeterStub(channel)
         while True:
             response = stub.SayHello(helloworld_pb2.HelloRequest(name="you"))
