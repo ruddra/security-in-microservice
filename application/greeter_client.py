@@ -49,8 +49,6 @@ def get_credentials():
 
 
 def get_channel(server, port):
-    import ipdb
-    ipdb.set_trace()
     if "secured" in sys.argv:
         return grpc.secure_channel(f"{server}:{port}", get_credentials())
     return grpc.insecure_channel(f"{server}:{port}")

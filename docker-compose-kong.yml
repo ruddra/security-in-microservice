@@ -63,10 +63,12 @@ services:
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
       KONG_PROXY_LISTEN: 0.0.0.0:8000 http2
-      KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443
+      KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443 http2
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       # KONG_DNS_RESOLVER: 192.168.18.4:8600,192.168.18.4:8500,192.168.18.4:8700
       KONG_DECLARATIVE_CONFIG: "/opt/kong/kong.yaml"
+      KONG_SSL_CERT: /ssl/server.crt
+      KONG_SSL_CERT_KEY: /ssl/server.key
     depends_on:
       - kong-migration
       - kong-database
@@ -81,6 +83,8 @@ services:
       - "8000:8000"
     volumes: 
       - ./config:/opt/kong
+      - ./application/ssl:/ssl
+
 
   #######################################
   # Konga database prepare
@@ -166,8 +170,7 @@ services:
         - ./application:/application
     networks:
       - kong-net
-      
- 
     command: sh -c "python -u /application/greeter_client.py"
+
 
  
