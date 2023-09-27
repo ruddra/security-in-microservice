@@ -1,0 +1,6 @@
+projectKey=sqp_56db2ad3851f69543ac59f6ab534ffc3079d8f93
+serverUrl=http://sonarqube:9000
+serverVersion=10.2.1.78527
+dashboardUrl=http://sonarqube:9000/dashboard?id=sqp_56db2ad3851f69543ac59f6ab534ffc3079d8f93
+ceTaskId=AYrV14XP6lX37LkigmFk
+ceTaskUrl=http://sonarqube:9000/api/ce/task?id=AYrV14XP6lX37LkigmFk

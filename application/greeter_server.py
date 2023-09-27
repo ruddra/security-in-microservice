@@ -1,6 +1,7 @@
 from concurrent import futures
 import logging
-
+import os
+import sys
 import consul
 import grpc
 from grpc_reflection.v1alpha import reflection
@@ -11,11 +12,14 @@ CONSUL_HOST = "consul"
 CONSUL_PORT = 8500
 GRPC_HOST = "grpc-server"
 GRPC_PORT = 50051
+PRIVATE_KEY = "./ssl/server.key"
+PRIVATE_CERTIFICATE = "./ssl/server.crt"
+os.environ['GRPC_VERBOSITY'] = 'debug'
 
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
     def SayHello(self, request, context):
-        print("Received hello from client. Saying hi back!")
+        # print(f"Received hello from {request.name}. Saying hi back!")
         return helloworld_pb2.HelloReply(message="Hello, %s!" % request.name)
 
 
@@ -34,6 +38,27 @@ def register():
     print("services: " + str(c.agent.services()))
 
 
+def read_chain_pair(private_key, certificates):
+    with open(private_key, 'rb') as f:
+        private_key = f.read()
+    with open(certificates, 'rb') as f:
+        certificates = f.read()
+    return (private_key, certificates)
+
+
+def get_credentials():
+    certs = read_chain_pair(PRIVATE_KEY, PRIVATE_CERTIFICATE)
+    return grpc.ssl_server_credentials([certs])
+
+
+def add_port(server, port):
+    if "secured" in sys.argv:
+        server.add_secure_port('[::]:{}'.format(port), get_credentials())
+    else:
+        server.add_insecure_port(f'[::]:{port}')
+    return server
+
+
 def serve():
     port = GRPC_PORT
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -44,7 +69,7 @@ def serve():
         reflection.SERVICE_NAME,
     )
     reflection.enable_server_reflection(SERVICE_NAMES, server)
-    server.add_insecure_port(f'[::]:{port}')
+    server = add_port(server, port)
     server.start()
     print(f"Server started, listening on {port}")
     try:

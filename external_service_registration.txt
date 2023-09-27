@@ -1,0 +1,11 @@
+curl -X POST localhost:8001/services \
+ --data name=ext_grpc_server \
+ --data protocol=grpc \
+ --data host=host.docker.internal \
+ --data port=50051
+
+  curl -X POST localhost:8001/services/ext_grpc_server/routes \
+ --data protocols=http \
+ --data name=ext-service \
+ --data paths[]=/grpc_server
+

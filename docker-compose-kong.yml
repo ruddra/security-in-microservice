@@ -3,10 +3,6 @@ version: "3"
 networks:
  kong-net:
   driver: bridge
-  ipam:
-      config:
-        - subnet: 192.168.18.0/24
-          gateway: 192.168.18.1
 
 services:
 
@@ -17,8 +13,7 @@ services:
     image: postgres:9.6
     restart: always
     networks:
-      kong-net:
-         ipv4_address: 192.168.18.5
+      - kong-net
     environment:
       POSTGRES_PASSWORD: kong
       POSTGRES_USER: kong
@@ -41,7 +36,7 @@ services:
       - kong-net
     restart: on-failure
     environment:
-      KONG_PG_HOST: 192.168.18.5
+      KONG_PG_HOST: kong-database
       KONG_DATABASE: postgres
       KONG_PG_PASSWORD: kong
       # KONG_DNS_RESOLVER: 192.168.18.4:8600,192.168.18.4:8500,192.168.18.4:8700
@@ -60,9 +55,11 @@ services:
     restart: always
     networks:
       - kong-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       KONG_DATABASE: postgres
-      KONG_PG_HOST: 192.168.18.5
+      KONG_PG_HOST: kong-database
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
       KONG_PROXY_LISTEN: 0.0.0.0:8000 http2
@@ -97,8 +94,7 @@ services:
       DB_USER: kong
       DB_PASSWORD: kong
     networks:
-      kong-net:
-        ipv4_address: 192.168.18.8
+      - kong-net
     restart: on-failure
     links:
       - kong-database
@@ -112,8 +108,7 @@ services:
     image: pantsel/konga:next
     restart: always
     networks:
-      kong-net: 
-        ipv4_address: 192.168.18.11
+      - kong-net
     environment:
       DB_ADAPTER: postgres
       DB_HOST: kong-database
@@ -135,8 +130,7 @@ services:
       container_name : consul
       image: hashicorp/consul:latest
       networks:
-        kong-net:
-          ipv4_address: 192.168.18.4
+        - kong-net
       expose:
         - 8500
         - 8600/udp
@@ -157,8 +151,7 @@ services:
         - ./application:/application
     command: sh -c "python -u /application/greeter_server.py"
     networks:
-      kong-net:
-        ipv4_address: 192.168.18.9
+      - kong-net
 
   grpc-client:
     build:
@@ -167,27 +160,14 @@ services:
     container_name: grpc_client_01
     depends_on:
         - grpc-server
+    environment:
+      - GRPC_DNS_RESOLVER=native
     volumes:
         - ./application:/application
     networks:
-      kong-net:
-        ipv4_address: 192.168.18.10
+      - kong-net
+      
  
     command: sh -c "python -u /application/greeter_client.py"
-
-  grpc-client-ext:
-    build:
-        context: .
-        dockerfile: ./Dockerfile
-    container_name: grpc_client_02
-    depends_on:
-        - grpc-server
-    volumes:
-        - ./application:/application
-    networks:
-      kong-net:
-        ipv4_address: 192.168.18.12
- 
-    command: sh -c "python -u /application/greeter_client.py external"
 
  

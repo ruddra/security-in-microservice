@@ -15,6 +15,7 @@
 
 from __future__ import print_function
 import sys
+import os
 import logging
 import time
 import consul
@@ -24,32 +25,64 @@ from grpc_generated import helloworld_pb2_grpc
 
 CONSUL_HOST = "consul"
 CONSUL_PORT = 8500
+# GRPC_HOST = "172.22.48.1"
 GRPC_HOST = "localhost"
 GRPC_PORT = 50051
+GRPC_PATH = "/"
+PRIVATE_CERT = "./ssl/server.crt"
 
 
 def resolve_service():
-    c = consul.Consul(host=CONSUL_HOST, port=CONSUL_PORT)
-    service = c.agent.services().get(f'{GRPC_HOST}-{GRPC_PORT}')
-    if service and not (sys.argv and sys.argv[0] == "external"):
-        return service["Address"], service["Port"]
-    print("Consul failed or calling external")
+    try:
+        c = consul.Consul(host=CONSUL_HOST, port=CONSUL_PORT)
+        service = c.agent.services().get(f'{GRPC_HOST}-{GRPC_PORT}')
+        if service and not "external" in sys.argv:
+            return service["Address"], service["Port"]
+    except Exception as e:
+        print(f"Consul failed or calling external: {str(e)}")
     return GRPC_HOST, GRPC_PORT
-    # index = None
-    # while True:
-    #     data = c.kv.get(, index=index)
-    #     print(data)
+
+
+def get_credentials():
+    with open(PRIVATE_CERT, 'rb') as f:
+        return grpc.ssl_channel_credentials(f.read())
+
+
+def get_channel(server, port):
+    import ipdb
+    ipdb.set_trace()
+    if "secured" in sys.argv:
+        return grpc.secure_channel(f"{server}:{port}", get_credentials())
+    return grpc.insecure_channel(f"{server}:{port}")
+
+
+def get_response(stub):
+    return stub.SayHello(helloworld_pb2.HelloRequest(name="you"))
+
+
+def time_grpc_response(*args):
+    import timeit
+    for i in range(10):
+        start_time = timeit.default_timer()
+        counter = 0
+        while counter < 100000:
+            get_response(*args)
+            counter += 1
+        print(f"Attempt {i}: Time took {timeit.default_timer() - start_time}")
 
 
 def run():
     print("Will try to call internal service")
-    server, port = resolve_service()
-    with grpc.insecure_channel(f"{server}:{port}/grpc_server") as channel:
+
+    with get_channel(*resolve_service()) as channel:
         stub = helloworld_pb2_grpc.GreeterStub(channel)
-        while True:
-            response = stub.SayHello(helloworld_pb2.HelloRequest(name="you"))
-            print("Greeter client received: " + response.message)
-            time.sleep(30)
+        if "timeit" in sys.argv:
+            time_grpc_response(stub)
+        else:
+            while True:
+                response = get_response(stub)
+                print("Greeter client received: " + response.message)
+                time.sleep(30)
 
 
 if __name__ == "__main__":

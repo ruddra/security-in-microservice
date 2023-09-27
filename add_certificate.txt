@@ -1,0 +1,11 @@
+curl -X POST localhost:8001/ca_certificates -F "cert=@ca.cert.pem"
+
+curl -X POST localhost:8001/services \
+ --data name=grpc_server \
+ --data protocol=grpc \
+ --data host=grpc-server \
+ --data port=50051 \
+ --data ca_certificates=<cert id>
+
+
+{"name":"schema violation","fields":{"ca_certificates":"value must be null","@entity":["failed conditional validation given value of field 'protocol'"]},"message":"2 schema violations (failed conditional validr

@@ -24,16 +24,24 @@ docker cp helloworld.proto kong_01:/usr/local/kong
 
 // attempt 2
 
+curl -X POST localhost:8001/services \
+ --data name=grpc_server \
+ --data protocol=grpc \
+ --data host=grpc-server \
+ --data port=50051 \
+ --data ca_certificates=b7f7fb8d-f354-4303-a217-cadbdd594ce7
+
 curl -XPOST localhost:8001/services/grpc_server/routes \
    --data protocols=grpc \
    --data name=grpc-service \
-   --data paths[]=/grpc
+   --data paths[]=/
+
+docker cp helloworld.proto kong_01:/usr/local/kong
+
+.\grpcurl.exe -v -d '{\"name\": \"AA\"}' -plaintext -max-msg-sz 5775947392 localhost:8000 helloworld.Greeter/SayHello
 
 
-grpcurl -v -d '{"name": "Kong!"}' \
-   -plaintext localhost:9080/grpc helloworld.Greeter.SayHello
-
-   // Forward KONG_PROXY_LISTEN
+// Forward KONG_PROXY_LISTEN
 
    curl -X POST http://localhost:8001/plugins \
     --data "name=forward-proxy"  \
@@ -43,7 +51,11 @@ grpcurl -v -d '{"name": "Kong!"}' \
     --data "config.https_verify=false"  \
     --data "config.x_headers=transparent"
 
-// Consul expose
+
+
+
+
+// Consul
 
 curl -X POST localhost:8001/services \
  --data name=consul \

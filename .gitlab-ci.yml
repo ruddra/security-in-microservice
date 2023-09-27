@@ -1,0 +1,14 @@
+stages:
+  - build
+  - test
+
+build-code-job:
+  stage: build
+  script:
+    - echo "Installing dependencies:"
+    - pip install -r requirements.txt
+
+test-code-job1:
+  stage: test
+  script:
+    - cd application & pytest --cov=application tests/
